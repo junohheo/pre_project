@@ -2,20 +2,22 @@ package preproject.stack.answer.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import preproject.stack.answer.dto.AnswerPatchDto;
-import preproject.stack.answer.dto.AnswerPostDto;
-import preproject.stack.answer.dto.AnswerResponseDto;
+import preproject.stack.answer.dto.*;
 import preproject.stack.answer.entity.Answer;
 import preproject.stack.answer.mapper.AnswerMapper;
 import preproject.stack.answer.service.AnswerService;
 import preproject.stack.post.entity.Post;
 import preproject.stack.post.service.PostService;
 import preproject.stack.response.MultiResponseDto;
+import preproject.stack.response.SingleResponseDto;
+import preproject.stack.user.dto.UserResponseDto;
 import preproject.stack.user.entity.User;
+import preproject.stack.user.mapper.UserMapper;
 import preproject.stack.user.service.UserService;
 
 import javax.validation.Valid;
@@ -34,6 +36,7 @@ public class AnswerController {
     private final UserService userService;
     private final PostService postService;
     private final AnswerMapper mapper;
+    private final UserMapper userMapper;
 
 
 
@@ -44,10 +47,13 @@ public class AnswerController {
                                      @Valid @RequestBody AnswerPostDto answerPostDto) {
 
         Answer answer = mapper.answerPostDtoToAnswer(answerPostDto);
-
         Answer response = answerService.createAnswer(userId,postId,answer);
+        AnswerResponseDto answerResponseDto = mapper.answerToAnswerResponseDto(response);
+        User user = userService.findUser(userId);
+        UserResponseDto userResponseDto = userMapper.userToUserResponseDto(user);
+        answerResponseDto.setUserResponseDto(userResponseDto);
 
-        return new ResponseEntity<>(mapper.answerToAnswerResponseDto(response), HttpStatus.CREATED);
+        return new ResponseEntity<>(new SingleResponseDto<>(answerResponseDto), HttpStatus.CREATED);
 
     }
 
@@ -68,9 +74,9 @@ public class AnswerController {
     public ResponseEntity getAnswer(
             @PathVariable("answer-id") @Positive Long answerId) {
 
-        Answer response = answerService.findAnswer(answerId);
+        AnswerUserResponseDto answer = answerService.findAnswer(answerId);
 
-        return new ResponseEntity<>(mapper.answerToAnswerResponseDto(response),HttpStatus.OK);
+        return new ResponseEntity<>(new SingleResponseDto<>(answer),HttpStatus.OK);
     }
     // 자기가 작성한 답변 전체 조회
     @GetMapping("/answer/user/{user-id}")
@@ -80,10 +86,16 @@ public class AnswerController {
         Page<Answer> answers = answerService.findUserAnswers(userId, page - 1, size);
         List<Answer> content = answers.getContent();
 
-        return new ResponseEntity<>(new MultiResponseDto<>(mapper.answersToAnswerResponseDto(content),answers),HttpStatus.OK);
+        AnswerPageDto answerPageDto = new AnswerPageDto();
+        answerPageDto.setAnswers(new MultiResponseDto<>(mapper.answersToAnswerResponseDto(content),answers));
+
+        User user = userService.findUser(userId);
+        answerPageDto.setUserResponseDto(userMapper.userToUserResponseDto(user));
+
+        return new ResponseEntity<>(new SingleResponseDto<>(answerPageDto), HttpStatus.OK);
     }
 
-    // 포스트에 답변 모두 조회
+    // 특정 포스트에 대한 답변만 조회, 불필요한듯?
     @GetMapping("/answer/{post-id}/answer")
     public ResponseEntity getAnswers(@PathVariable("post-id") long postId,
             @RequestParam Integer page, @RequestParam Integer size ) {
@@ -91,7 +103,7 @@ public class AnswerController {
         Page<Answer> answers = answerService.findAnswers(postId, page - 1, size);
         List<Answer> response = answers.getContent();
 
-        return new ResponseEntity<>(new MultiResponseDto<>(response,answers),HttpStatus.OK);
+        return new ResponseEntity<>(new MultiResponseDto<>(response,answers), HttpStatus.OK);
     }
 
     // 답변 삭제
@@ -104,4 +116,6 @@ public class AnswerController {
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
+
+
 }

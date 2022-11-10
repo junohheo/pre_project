@@ -1,10 +1,8 @@
 package preproject.stack.answer.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
-import preproject.stack.user.entity.User;
-
+import preproject.stack.user.dto.UserResponseDto;
 import java.time.LocalDateTime;
 
 @Getter
@@ -18,5 +16,6 @@ public class AnswerResponseDto {
 
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
+    private UserResponseDto userResponseDto;
 
 }

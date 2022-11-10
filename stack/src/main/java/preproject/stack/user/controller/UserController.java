@@ -2,8 +2,10 @@ package preproject.stack.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.header.Header;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preproject.stack.response.MultiResponseDto;
@@ -32,6 +34,7 @@ public class UserController {
     public ResponseEntity postUser(@Valid @RequestBody UserPostDto userPostDto) {
         User user = mapper.userPostDtoToUser(userPostDto);
         User response = userService.createUser(user);
+
         return new ResponseEntity<>(
                 new SingleResponseDto<>(mapper.userToUserResponseDto(response)), HttpStatus.CREATED);
     }
@@ -41,6 +44,7 @@ public class UserController {
         userPatchDto.setUserId(userId);
         User user = mapper.userPatchDtoToUser(userPatchDto);
         User response = userService.updateUser(user);
+
         return new ResponseEntity<>(
                 new SingleResponseDto<>(mapper.userToUserResponseDto(response)), HttpStatus.OK);
     }
@@ -51,7 +55,7 @@ public class UserController {
         Page<User> pageUsers = userService.findUsers(page-1, size);
         List<User> users = pageUsers.getContent();
         //서비스 구현
-        return new ResponseEntity<>(
+     return new ResponseEntity<>(
                 new MultiResponseDto<>(mapper.usersToUserResponseDto(users), pageUsers), HttpStatus.OK);
 
     }
@@ -59,8 +63,9 @@ public class UserController {
     @GetMapping("/{user-id}")
     public ResponseEntity getUser(@PathVariable("user-id") long userId) {
         User user = userService.findUser(userId);
+
         return new ResponseEntity<>(
-                new SingleResponseDto<>(mapper.userToUserResponseDto(user)),HttpStatus.OK);
+                new SingleResponseDto<>(mapper.userToUserResponseDto(user)), HttpStatus.OK);
     }
 
     //회원 삭제? 탈퇴?
@@ -70,6 +75,7 @@ public class UserController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 
 }
 
